@@ -43,6 +43,7 @@
   };
 
   var S = {
+    loc: null,
     places: [], query: "", item: null,
     view: "home", cur: null, rec: null, stack: [], maxWalk: 10,
     saved: num(store("session", "qrious_saved"), 0),
@@ -71,7 +72,8 @@
   function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
   function demoTag() {
     var sample = CFG.demo || S.places.some(function (p) { return p.source === "sample"; });
-    return sample ? '<span class="demo-tag">Sample data</span>' : "";
+    var simulated = S.places.some(function (p) { return p.source === "simulated"; });
+    return sample ? '<span class="demo-tag">Sample data</span>' : simulated ? '<span class="demo-tag">Simulated feed</span>' : "";
   }
 
   function verdict(p) {
@@ -110,7 +112,8 @@
   /* ============ 3. Loading places and asking Gemini ============ */
   function loadPlaces(query) {
     if (CFG.demo) return Promise.resolve(DEMO.map(adaptPlace));
-    return fetch(CFG.placesUrl + "?q=" + encodeURIComponent(query || ""))
+    return fetch(CFG.placesUrl + "?q=" + encodeURIComponent(query || "") +
+      (S.loc ? "&lat=" + S.loc.lat + "&lng=" + S.loc.lng : ""))
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (d) { return (d.places || d).map(adaptPlace); })
       .catch(function () {
@@ -145,7 +148,7 @@
     if (!CFG.demo) {
       return fetch(CFG.askUrl, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: hist || [], context: { item: S.chatCtx.item, selected: S.cur } })
+        body: JSON.stringify({ message: text, history: hist || [], context: { item: S.chatCtx.item, selected: S.cur }, location: S.loc })
       }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (d) {
           if (d.error || !d.reply) return offlineAnswer(text, ERR_WHY[d.error] || "Gemini error");
@@ -560,11 +563,33 @@
     useSampleMap: function () { CFG.realMap = false; drawMap(); drawPins(); }
   };
 
+  /* Where you are: ask the browser once. Outside Oxford (or if you say no) the OxHack venue is used. */
+  function findMe() {
+    if (CFG.demo || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      var dLat = (lat - 51.752) * 111, dLng = (lng + 1.2577) * 69;   // rough km from central Oxford
+      if (Math.sqrt(dLat * dLat + dLng * dLng) > 6) {
+        toast("You're outside Oxford, so I've used the OxHack venue as your starting point.");
+        return;
+      }
+      S.loc = { lat: lat, lng: lng };
+      document.dispatchEvent(new CustomEvent("qrious:me", { detail: S.loc }));
+      loadPlaces(S.query).then(function (list) {
+        S.places = list; render(false);
+        document.dispatchEvent(new CustomEvent("qrious:places", { detail: S.places }));
+      });
+    }, function () {
+      toast("Location is off, so walk times are measured from the OxHack venue.");
+    }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+  }
+
   /* Start */
   applyA11y();
   drawMap();
   loadPlaces("").then(function (list) {
     S.places = list; render(false);
     document.dispatchEvent(new CustomEvent("qrious:places", { detail: S.places }));
+    findMe();
   });
 })();

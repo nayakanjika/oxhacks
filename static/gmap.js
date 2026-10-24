@@ -24,9 +24,21 @@
   function pinEl(p, selected) {
     var el = document.createElement("div");
     el.className = "gm-pin" + (selected ? " sel" : "");
-    el.textContent = levelWord(p.queueNow) + " · " + p.wait + " min";
+    el.innerHTML = "<b>" + levelWord(p.queueNow) + "</b> · " + p.wait + " min wait<small>" + p.walk + " min walk</small>";
     return el;
   }
+
+  var meMarker = null;
+  function drawMe(loc) {
+    if (!ready || !loc) return;
+    var dot = document.createElement("div");
+    dot.className = "gm-me";
+    dot.setAttribute("aria-label", "You are here");
+    if (meMarker) meMarker.map = null;
+    meMarker = new MarkerClass({ map: map, position: loc, title: "You are here", content: dot, zIndex: 20 });
+  }
+  var myLoc = null;
+  document.addEventListener("qrious:me", function (e) { myLoc = e.detail; drawMe(myLoc); });
 
   function draw() {
     if (!ready) return;
@@ -71,6 +83,7 @@
       ready = true;
       places = (window.Qrious && window.Qrious.places()) || [];
       draw();
+      drawMe(myLoc);
     } catch (err) {
       console.error(err);
       fallback("map failed to start");
