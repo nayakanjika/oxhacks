@@ -64,3 +64,15 @@ window.QRIOUS_DEMO_PLACES = [
     lat: 51.7510, lng: -1.2560, map_x: 56, map_y: 28
   }
 ];
+
+/* Sample hourly history for the "best time to go" chart (browser-only demo). */
+(function () {
+  var shape = { "blue-door": [3, 12], "corner-roast": [1, 6], "oat-and-bean": [2, 6], "quad-coffee": [2, 7], "tillys": [1, 3] };
+  window.QRIOUS_DEMO_PLACES.forEach(function (p) {
+    var s = shape[p.id] || [2, 6], hours = [];
+    for (var h = 0; h < 24; h++) {
+      hours.push(Math.round(s[0] + s[1] * Math.exp(-Math.pow(h - 9, 2) / 4) + 0.8 * s[1] * Math.exp(-Math.pow(h - 13, 2) / 4)));
+    }
+    p.by_hour = hours;
+  });
+})();
