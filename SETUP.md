@@ -92,3 +92,16 @@ To use ElevenLabs later, change those two functions only. The microphone needs
 ### Accessibility
 Settings (gear icon) has Larger text, a dyslexia-friendly font and High contrast.
 They are remembered in the browser. Queue length is always a word plus bars.
+
+## Chat and API routes (Gemini)
+
+The chat panel now talks to the server. Files:
+
+- `chat.py`: Gemini call (Aditya's chatbot logic as a web function, no tkinter).
+- `api.py`: routes `/api/health`, `/api/places`, `/api/ask`, `/api/report`.
+- `places_data.py`: the places and queue numbers. **Tiger Data teammate: replace the body of `get_places()` here** and keep the field names.
+
+Put `GEMINI_API_KEY=...` in the `.env` file (never in code, never on GitHub), then restart `python3 app.py`.
+Check `http://127.0.0.1:5001/api/health`: `gemini_key_loaded` should be `true`.
+If Gemini fails, the chat falls back to sample answers and says why in brackets.
+To force a model, add `GEMINI_MODEL=...` to `.env`.
