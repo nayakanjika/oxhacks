@@ -1,0 +1,226 @@
+
+/* GENERAL STYLING */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #eef0f4;
+
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* PHONE FRAME */
+
+.phone {
+    width: 350px;
+    height: 690px;
+
+    background: #002147;
+
+    border: 12px solid #080808;
+    border-radius: 52px;
+
+    position: relative;
+    overflow: hidden;
+
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+/* PHONE NOTCH */
+
+.notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 145px;
+    height: 25px;
+
+    background: #080808;
+
+    border-radius: 0 0 18px 18px;
+
+    z-index: 1100;
+}
+
+/* MAP */
+
+#map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* BOTTOM PANEL */
+
+.bottom-panel {
+    position: absolute;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    max-height: 55%;
+
+    background: #f5f0e8;
+
+    border-radius: 45px 45px 0 0;
+
+    padding: 15px 22px 25px;
+
+    z-index: 1000;
+
+    overflow-y: auto;
+
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+}
+
+/* HANDLE */
+
+.handle {
+    width: 55px;
+    height: 6px;
+
+    background: black;
+
+    border-radius: 10px;
+
+    margin: 0 auto 22px;
+}
+
+/* HEADING */
+
+h2 {
+    color: #002147;
+
+    font-size: 19px;
+    font-weight: 800;
+
+    text-align: center;
+
+    margin-bottom: 12px;
+}
+
+/* SEARCH BAR */
+
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+#search {
+    width: 100%;
+
+    padding: 13px 40px 13px 12px;
+
+    background: transparent;
+
+    border: 1px solid #777;
+    border-radius: 2px;
+
+    font-size: 14px;
+
+    color: #002147;
+
+    outline: none;
+}
+
+#search:focus {
+    border: 2px solid #002147;
+}
+
+.search-icon {
+    position: absolute;
+
+    right: 12px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    font-size: 25px;
+    color: #555;
+
+    pointer-events: none;
+}
+
+/* SEARCH RESULTS */
+
+#results {
+    margin-top: 15px;
+}
+
+.result {
+    padding: 12px 5px;
+
+    border-bottom: 1px solid #ddd;
+
+    cursor: pointer;
+
+    transition: background 0.2s;
+}
+
+.result:hover {
+    background: #e8e1d7;
+}
+
+.result strong {
+    display: block;
+
+    font-size: 14px;
+    color: #002147;
+
+    margin-bottom: 5px;
+}
+
+.result small {
+    font-size: 12px;
+    color: #666;
+}
+
+/* MAP MARKERS */
+
+.custom-marker {
+    background: #002147;
+
+    border: 3px solid white;
+    border-radius: 50%;
+
+    width: 18px;
+    height: 18px;
+
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* MOBILE RESPONSIVENESS */
+
+@media (max-width: 500px) {
+
+    body {
+        background: #002147;
+    }
+
+    .phone {
+        width: 100vw;
+        height: 100dvh;
+
+        border: none;
+        border-radius: 0;
+
+        box-shadow: none;
+    }
+
+    .notch {
+        display: none;
+    }
+}
