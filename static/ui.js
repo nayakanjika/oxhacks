@@ -529,7 +529,8 @@
   window.Qrious = {
     setPlaces: function (list) { S.places = list.map(adaptPlace); render(false); document.dispatchEvent(new CustomEvent("qrious:places", { detail: S.places })); },
     select: selectPlace,
-    places: function () { return S.places; }
+    places: function () { return S.places; },
+    useSampleMap: function () { CFG.realMap = false; drawMap(); drawPins(); }
   };
 
   /* Start */

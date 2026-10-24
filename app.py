@@ -7,6 +7,8 @@ To add a new page, copy one of the routes below, change the address and the
 template name, then create the matching file in the templates/ folder.
 """
 
+import os
+
 from flask import Flask, render_template
 
 from api import api  # the /api routes (places, chat, report): see api.py
@@ -31,7 +33,8 @@ def login():
 def search():
     """Where "Continue as guest" goes. Teammates build the search bar,
     the Ask chatbot, the map and the queue pages from here."""
-    return render_template("search.html")
+    # The Google Maps key lives in .env (GOOGLE_MAPS_API_KEY). Empty = sample map.
+    return render_template("search.html", maps_key=os.environ.get("GOOGLE_MAPS_API_KEY", ""))
 
 
 if __name__ == "__main__":
