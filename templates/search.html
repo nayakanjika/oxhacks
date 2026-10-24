@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Search | Q-rious{% endblock %}
+
+{% block content %}
+<header class="top-bar">
+  <a href="{{ url_for('index') }}" class="top-bar-brand" aria-label="Back to the Q-rious home page">
+    <img class="logo-tiny" src="{{ url_for('static', filename='logo-white.svg') }}" alt="">
+    <span>Q-rious</span>
+  </a>
+</header>
+
+<section class="app-shell">
+  <h1>Search</h1>
+  <p class="muted">This page is a placeholder. The team builds the rest here.</p>
+
+  {# TEAMMATES: build your parts below. Suggested order:
+       1. Search bar plus the "Ask" button (Gemini chatbot)
+       2. Place selection and queue lengths (data from Tiger Data)
+       3. Google Maps and other places that sell the same item
+       4. Filters for how far the user will walk
+     Show queue length as a WORD plus an icon, not just a colour
+     (Short / Medium / Long), so it works for colour blindness. #}
+
+  <div class="placeholder-card">
+    <p>Search bar and Ask button go here.</p>
+  </div>
+  <div class="placeholder-card">
+    <p>Nearby queues go here.</p>
+  </div>
+</section>
+{% endblock %}

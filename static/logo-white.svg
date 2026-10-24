@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-66 -66 160 160" width="320" height="320" role="img" aria-label="Q-rious logo: a Q and a question mark combined">
+  <title>Q-rious logo (white)</title>
+  <g fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M26.9 26.9 A38 38 0 1 0 -6.6 37.4"/>
+    <line x1="26.9" y1="26.9" x2="52" y2="52"/>
+    <circle cx="72" cy="72" r="8" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

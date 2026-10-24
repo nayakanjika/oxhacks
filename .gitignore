@@ -1,0 +1,16 @@
+# Your own Python space (everyone makes their own, never share it)
+venv/
+.venv/
+
+# Python clutter
+__pycache__/
+*.pyc
+
+# Secret keys: NEVER commit these
+.env
+
+# Mac clutter
+.DS_Store
+
+# Flask
+instance/
