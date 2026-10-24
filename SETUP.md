@@ -105,3 +105,10 @@ Put `GEMINI_API_KEY=...` in the `.env` file (never in code, never on GitHub), th
 Check `http://127.0.0.1:5001/api/health`: `gemini_key_loaded` should be `true`.
 If Gemini fails, the chat falls back to sample answers and says why in brackets.
 To force a model, add `GEMINI_MODEL=...` to `.env`.
+
+## Real Google Map
+
+- `static/gmap.js` draws the Google Map inside `#map` (based on Anjika's `map.js`) with one pin per place.
+- Put `GOOGLE_MAPS_API_KEY=...` in `.env` and restart `python3 app.py`. No key (or Google refuses it): the sample map is used automatically.
+- The key must allow the website `http://127.0.0.1:5001/*` (Google Cloud > Credentials > the key > Website restrictions), and the **Maps JavaScript API** must be enabled. Add the Vultr address too when deployed.
+- Tapping a pin opens that place's screen. Pins use lat and lng from `places_data.py`.

@@ -249,3 +249,12 @@ label.lbl { display: block; font-size: .8rem; color: var(--muted); margin: 0 0 .
   text-align: center; opacity: 0; transform: translateY(-10px); pointer-events: none; transition: opacity .2s, transform .2s;
 }
 .toast.show { opacity: 1; transform: none; }
+
+/* ---------- Real Google Map pins (gmap.js) ---------- */
+.gm-pin {
+  padding: .25rem .6rem; background: #fff; color: var(--oxford-blue);
+  border: 2px solid var(--oxford-blue); border-radius: .8rem;
+  font: 600 .78rem/1.2 inherit; font-family: inherit; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3); cursor: pointer;
+}
+.gm-pin.sel { background: var(--oxford-blue); color: #fff; transform: scale(1.12); }

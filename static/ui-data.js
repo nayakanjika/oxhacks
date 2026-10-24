@@ -20,7 +20,7 @@
 window.QRIOUS_CONFIG = {
   demo: false,               // false = use the /api routes below (they fall back to
                              // sample answers if the server fails). true = browser-only sample data.
-  realMap: false,            // set true once the real Google Map fills #map
+  realMap: !!window.QRIOUS_MAPS_KEY,   // true when a Google Maps key is set in .env (gmap.js draws the map)
   placesUrl: "/api/places",  // GET ?q=coconut milk latte  ->  list of places
   askUrl: "/api/ask",        // POST {message, context}    ->  {reply, place_id?}
   reportUrl: "/api/report"   // POST {place_id, level}     ->  {ok: true}
