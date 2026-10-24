@@ -18,7 +18,8 @@
    ------------------------------------------------------------------ */
 
 window.QRIOUS_CONFIG = {
-  demo: true,                // true = sample data. false = call the routes below.
+  demo: false,               // false = use the /api routes below (they fall back to
+                             // sample answers if the server fails). true = browser-only sample data.
   realMap: false,            // set true once the real Google Map fills #map
   placesUrl: "/api/places",  // GET ?q=coconut milk latte  ->  list of places
   askUrl: "/api/ask",        // POST {message, context}    ->  {reply, place_id?}

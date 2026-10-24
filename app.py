@@ -9,7 +9,10 @@ template name, then create the matching file in the templates/ folder.
 
 from flask import Flask, render_template
 
+from api import api  # the /api routes (places, chat, report): see api.py
+
 app = Flask(__name__)
+app.register_blueprint(api)
 
 
 @app.route("/")

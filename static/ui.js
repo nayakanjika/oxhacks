@@ -48,7 +48,7 @@
     saved: num(store("session", "qrious_saved"), 0),
     a11y: { large: false, dyslexia: false, contrast: false },
     notify: num(store("local", "qrious_notify"), 5) || 5,
-    chatCtx: { item: null }, chatStarted: false
+    chatCtx: { item: null }, chatStarted: false, history: []
   };
   try { var savedA = JSON.parse(store("local", "qrious_a11y") || "null"); if (savedA) S.a11y = Object.assign(S.a11y, savedA); } catch (e) {}
 
@@ -69,7 +69,10 @@
   }
   function total(p) { return p.walk + p.wait; }
   function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
-  var DEMO_TAG = CFG.demo ? '<span class="demo-tag">Sample data</span>' : "";
+  function demoTag() {
+    var sample = CFG.demo || S.places.some(function (p) { return p.source === "sample"; });
+    return sample ? '<span class="demo-tag">Sample data</span>' : "";
+  }
 
   function verdict(p) {
     if (p.trend === "dropping") return { title: "Worth waiting.", text: "The queue is clearing. About " + p.wait + " min." };
@@ -97,6 +100,7 @@
       trend: raw.trend || "steady",
       sells: raw.sells || [],
       note: raw.recommendation || raw.summary || "",
+      source: raw.source || (CFG.demo ? "sample" : ""),
       lat: raw.lat, lng: raw.lng,
       x: raw.map_x != null ? raw.map_x : 50, y: raw.map_y != null ? raw.map_y : 30
     };
@@ -126,14 +130,27 @@
     return p.sells.some(function (s) { return String(s).toLowerCase().indexOf(item) >= 0; });
   }
 
-  function askGemini(text) {
+  var ERR_WHY = {
+    no_key: "Gemini key missing from .env", bad_key: "Gemini key rejected",
+    busy: "Gemini is busy", network: "couldn't reach Gemini",
+    no_model: "Gemini model not available", empty: "no answer from Gemini"
+  };
+  function offlineAnswer(text, why) {   // safety net so the chat never goes blank
+    var r = demoAsk(text);
+    r.text += " (Offline demo answer: " + why + ".)";
+    return r;
+  }
+  function askGemini(text, hist) {
     if (!CFG.demo) {
       return fetch(CFG.askUrl, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, context: { item: S.chatCtx.item, selected: S.cur } })
+        body: JSON.stringify({ message: text, history: hist || [], context: { item: S.chatCtx.item, selected: S.cur } })
       }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function (d) { return { text: d.reply, placeId: d.place_id }; })
-        .catch(function () { return { text: "Sorry, I couldn't reach the server just now. Please try again." }; });
+        .then(function (d) {
+          if (d.error || !d.reply) return offlineAnswer(text, ERR_WHY[d.error] || "Gemini error");
+          return { text: d.reply, placeId: d.place_id };
+        })
+        .catch(function () { return offlineAnswer(text, "server not reachable"); });
     }
     return new Promise(function (resolve) { setTimeout(function () { resolve(demoAsk(text)); }, 650); });
   }
@@ -244,7 +261,7 @@
     home: function () {
       var n = S.places.filter(function (p) { return !S.item || hasItem(p, S.item); }).length;
       return '<div class="grab"></div><div class="sheet-top"><div><h2 tabindex="-1">Near you</h2>' +
-        '<p class="meta">' + (S.item ? plural(n, "place sells", "places sell") + " " + esc(S.item) : plural(n, "place", "places") + " nearby") + " · tap a pin" + DEMO_TAG + "</p></div>" +
+        '<p class="meta">' + (S.item ? plural(n, "place sells", "places sell") + " " + esc(S.item) : plural(n, "place", "places") + " nearby") + " · tap a pin" + demoTag() + "</p></div>" +
         '<button class="small-btn" data-act="settings" aria-label="Settings">' + ICON.gear + "</button></div>" +
         '<p class="saved-line">Time saved this session: <b>' + S.saved + " min</b></p>";
     },
@@ -258,7 +275,7 @@
         '<button class="small-btn" data-act="back" aria-label="Close">✕</button></div>' +
         '<div class="tiles"><div class="tile"><small>Queue now</small><b>' + plural(p.queueNow, "person", "people") + "</b>" + lvlHTML(p.queueNow) + "</div>" +
         '<div class="tile"><small>When you arrive</small><b>~' + p.wait + " min</b>" + lvlHTML(p.queueArrive, trendWord) + "</div></div>" +
-        '<div class="note"><em>Prediction · ' + p.low + " to " + p.high + " min" + DEMO_TAG + "</em>Verdict: <b>" + esc(v.title) + "</b> " + esc(v.text) + "</div>" +
+        '<div class="note"><em>Prediction · ' + p.low + " to " + p.high + " min" + demoTag() + "</em>Verdict: <b>" + esc(v.title) + "</b> " + esc(v.text) + "</div>" +
         '<div class="btn-row">' +
         (good
           ? '<button class="btn btn-primary" data-act="go" data-id="' + esc(p.id) + '">Take me there</button><button class="btn btn-outline" data-act="alts">Find other places</button>'
@@ -283,7 +300,7 @@
       return head("Other options") + '<div class="body"><label class="lbl">How far will you walk?</label><div class="chips" role="group" aria-label="Walking distance">' + chips + "</div>" +
         (list.length ? cards : empty) +
         (list.length ? '<div class="btn-row"><button class="btn btn-outline" data-act="compare">Compare with ' + esc(origin.name) + "</button></div>" : "") +
-        '<p class="meta" style="text-align:center;margin-top:.8rem">Total time = walk + predicted queue' + DEMO_TAG + "</p></div>";
+        '<p class="meta" style="text-align:center;margin-top:.8rem">Total time = walk + predicted queue' + demoTag() + "</p></div>";
     },
 
     recommend: function () {
@@ -295,7 +312,7 @@
         (saved > 0 ? "you'll be served sooner than at " + origin.name + "." : "it's about the same as " + origin.name + "."));
       return head("Your best option") + '<div class="body"><h2 tabindex="-1" style="margin:0;font-size:1.35rem">' + esc(alt.name) + "</h2>" +
         '<p class="meta">' + esc(alt.category) + " · " + alt.walk + " min walk" + (S.item ? " · " + esc(S.item) + " ✓" : "") + "</p>" +
-        '<div class="note"><div class="row"><div><em>✦ Gemini' + DEMO_TAG + "</em>" + esc(text) + '</div><button class="speak-btn" data-act="speak" data-text="' + esc(text) + '" aria-label="Read this aloud">' + ICON.speak + "</button></div></div>" +
+        '<div class="note"><div class="row"><div><em>✦ Gemini' + demoTag() + "</em>" + esc(text) + '</div><button class="speak-btn" data-act="speak" data-text="' + esc(text) + '" aria-label="Read this aloud">' + ICON.speak + "</button></div></div>" +
         '<div class="tiles"><div class="tile"><small>Walk</small><b>' + alt.walk + ' min</b></div><div class="tile"><small>Queue on arrival</small><b>' + plural(alt.queueArrive, "person", "people") + "</b>" + lvlHTML(alt.queueArrive) + "</div></div>" +
         '<div class="saved-big"><small>Compared with ' + esc(origin.name) + "</small><b>" + (saved > 0 ? "You save " + saved + " min" : "About the same time") + "</b></div>" +
         '<div class="btn-row"><button class="btn btn-primary" data-act="go" data-id="' + esc(alt.id) + '" data-saved="' + Math.max(0, saved) + '">Take me there</button>' +
@@ -313,7 +330,7 @@
       ];
       return head("Compare") + '<div class="body"><div class="cmp"><div></div><div class="h">' + esc(a.name) + '</div><div class="h">' + esc(b.name) + "</div>" +
         rows.map(function (r) { return '<div class="lab">' + r[0] + "</div>" + cell(r[1], r[4]) + cell(r[2], r[3]); }).join("") + "</div>" +
-        '<p class="meta" style="margin-top:.8rem">The highlighted box is quicker.' + DEMO_TAG + "</p>" +
+        '<p class="meta" style="margin-top:.8rem">The highlighted box is quicker.' + demoTag() + "</p>" +
         '<div class="btn-row"><button class="btn btn-primary" data-act="go" data-id="' + esc(b.id) + '" data-saved="' + Math.max(0, total(a) - total(b)) + '">Take me to ' + esc(b.name) + '</button><button class="btn btn-outline" data-act="back">Back</button></div></div>';
     },
 
@@ -408,8 +425,11 @@
     addMsg("u", text); $("#chatText").value = "";
     var typing = addMsg("a", "Thinking…"); typing.classList.add("typing");
     typing.querySelector(".msg-actions").remove();
-    askGemini(text).then(function (r) {
+    var hist = S.history.slice(-8);
+    S.history.push({ role: "user", text: text });
+    askGemini(text, hist).then(function (r) {
       typing.remove(); addMsg("a", r.text, r.placeId);
+      S.history.push({ role: "model", text: r.text });
     });
   }
 
@@ -469,8 +489,8 @@
         var pid = ($("#reportPlace") || {}).value, p = byId(pid), lvKey = el.getAttribute("data-level");
         if (p) {
           var people = { short: 2, medium: 6, long: 12 }[lvKey], wt = { short: 2, medium: 5, long: 12 }[lvKey];
-          if (CFG.demo) { p.queueNow = people; p.queueArrive = people; p.wait = wt; p.low = Math.max(0, wt - 2); p.high = wt + 3; }
-          else { fetch(CFG.reportUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ place_id: pid, level: lvKey }) }).catch(function () {}); }
+          p.queueNow = people; p.queueArrive = people; p.wait = wt; p.low = Math.max(0, wt - 2); p.high = wt + 3;
+          if (!CFG.demo) { fetch(CFG.reportUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ place_id: pid, level: lvKey }) }).catch(function () {}); }
           toast("Thanks! Queue reported for " + p.name + ".");
         }
         back(); break;
