@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Oxford Food Finder</title>
+
+    <!-- Leaflet Map CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Your CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='map.css') }}"
+    >
+</head>
+
+<body>
+
+    <div class="phone">
+
+        <!-- Phone notch -->
+        <div class="notch"></div>
+
+        <!-- Interactive map -->
+        <div id="map"></div>
+
+        <!-- Bottom search panel -->
+        <div class="bottom-panel">
+
+            <div class="handle"></div>
+
+            <h2>WHAT ARE YOU CRAVING?</h2>
+
+            <div class="search-container">
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Coffee, pizza, brunch..."
+                    autocomplete="off"
+                >
+                <span class="search-icon">⌕</span>
+            </div>
+
+            <!-- Results appear here -->
+            <div id="results"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Your JavaScript -->
+    <script src="{{ url_for('static', filename='map.js') }}"></script>
+
+</body>
+</html>
