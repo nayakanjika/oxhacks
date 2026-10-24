@@ -476,7 +476,8 @@
       '<div class="setting"><div><h3>Notify me</h3><p>Alert me when a queue drops under this many people</p>' +
       '<div class="stepper"><button data-act="notify-dec" aria-label="Fewer people">−</button><output id="notifyVal" aria-live="polite">' + S.notify + '</output><button data-act="notify-inc" aria-label="More people">+</button></div></div>' +
       '<button class="chip" data-act="notify-set">Set</button></div>' +
-      '<div class="setting"><div><h3>Report a queue</h3><p>Two taps to help others</p></div><button class="chip" data-act="report-open">Open</button></div>';
+      '<div class="setting"><div><h3>Report a queue</h3><p>Two taps to help others</p></div><button class="chip" data-act="report-open">Open</button></div>' +
+      '<div class="setting"><div><h3>Back to home</h3><p>Return to the Q-rious homepage</p></div><a class="chip" href="/" style="text-decoration:none;display:inline-flex;align-items:center">Home</a></div>';
   }
   function applyA11y() {
     document.documentElement.classList.toggle("a11y-large", !!S.a11y.large);
