@@ -9,7 +9,7 @@ app.py registers this file with two lines. Teammates: change places_data.py
 (Tiger Data) and chat.py (Gemini), not this file.
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 
 import chat
 import places_data
@@ -27,6 +27,12 @@ def health():
                    data_source=(found[0].get("source") if found else None),
                    newest_reading_minutes_ago=places_data.LAST_INFO["newest_reading_minutes_ago"],
                    tiger_data_error=places_data.LAST_ERROR["message"])
+
+
+@api.get("/me")
+def me():
+    u = session.get("user")
+    return jsonify(user=({"name": u["name"], "email": u["email"]} if u else None))
 
 
 @api.get("/places")

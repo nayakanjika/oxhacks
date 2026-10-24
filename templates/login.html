@@ -1,22 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Log in | Q-rious{% endblock %}
+{% block title %}{{ "Create account" if mode == "signup" else "Log in" }} | Q-rious{% endblock %}
 {% block body_class %}landing{% endblock %}
+
+{% block head %}
+<style>
+  .auth-form { width: 100%; max-width: 22rem; display: flex; flex-direction: column; gap: .8rem; text-align: left; margin: 1rem auto; }
+  .auth-form label { font-weight: 500; font-size: .95rem; display: flex; flex-direction: column; gap: .3rem; }
+  .auth-form input { font: inherit; padding: .8rem 1rem; border-radius: .8rem; border: 2px solid transparent; background: #fff; color: #1a1a1a; min-height: 2.8rem; }
+  .auth-form input:focus { outline: 3px solid #fff; outline-offset: 2px; }
+  .auth-error { background: #fff; color: #8a1c1c; padding: .7rem 1rem; border-radius: .8rem; max-width: 22rem; margin: .5rem auto; font-weight: 500; }
+  .auth-switch { margin-top: .6rem; }
+  .auth-switch a { color: inherit; font-weight: 600; }
+</style>
+{% endblock %}
 
 {% block content %}
 <section class="landing-content">
   <a href="{{ url_for('index') }}" aria-label="Back to the Q-rious home page">
     <img class="logo logo-small" src="{{ url_for('static', filename='logo-white.svg') }}" alt="Q-rious logo">
   </a>
-  <h1>Log in</h1>
-  <p class="tagline">Log in is coming soon. For now, you can carry on as a guest.</p>
+  <h1>{{ "Create your account" if mode == "signup" else "Log in" }}</h1>
 
-  {# LATER: replace this placeholder with the real login form.
-     Users will be stored in a Tiger Data table, with hashed passwords
-     (never plain text). #}
+  {% if error %}<p class="auth-error" role="alert">{{ error }}</p>{% endif %}
+
+  <form class="auth-form" method="post" action="{{ url_for('login') }}">
+    <input type="hidden" name="mode" value="{{ mode }}">
+    {% if mode == "signup" %}
+    <label>Name
+      <input type="text" name="name" value="{{ name }}" autocomplete="name" required>
+    </label>
+    {% endif %}
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" autocomplete="email" required>
+    </label>
+    <label>Password{% if mode == "signup" %} (8 or more characters){% endif %}
+      <input type="password" name="password" minlength="{{ 8 if mode == 'signup' else 1 }}"
+             autocomplete="{{ 'new-password' if mode == 'signup' else 'current-password' }}" required>
+    </label>
+    <button class="btn btn-primary" type="submit">{{ "Create account" if mode == "signup" else "Log in" }}</button>
+  </form>
+
+  <p class="auth-switch">
+    {% if mode == "signup" %}Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+    {% else %}New here? <a href="{{ url_for('login', mode='signup') }}">Create an account</a>{% endif %}
+  </p>
 
   <div class="buttons">
-    <a class="btn btn-primary" href="{{ url_for('search') }}">Continue as guest</a>
+    <a class="btn btn-outline" href="{{ url_for('search') }}">Continue as guest</a>
     <a class="btn btn-outline" href="{{ url_for('index') }}">Back</a>
   </div>
 </section>
