@@ -25,12 +25,14 @@ def health():
                    places=len(found),
                    tiger_data_configured=places_data.db_configured(),
                    data_source=(found[0].get("source") if found else None),
+                   newest_reading_minutes_ago=places_data.LAST_INFO["newest_reading_minutes_ago"],
                    tiger_data_error=places_data.LAST_ERROR["message"])
 
 
 @api.get("/places")
 def places():
-    return jsonify(places=places_data.get_places(request.args.get("q", "")))
+    return jsonify(places=places_data.get_places(request.args.get("q", ""),
+                                                 request.args.get("lat"), request.args.get("lng")))
 
 
 @api.post("/ask")
@@ -40,7 +42,8 @@ def ask():
     if not message:
         return jsonify(error="empty_message", reply="", place_id=None), 400
     history = data.get("history") if isinstance(data.get("history"), list) else []
-    result = chat.ask(message, history, places_data.get_places())
+    loc = data.get("location") if isinstance(data.get("location"), dict) else {}
+    result = chat.ask(message, history, places_data.get_places("", loc.get("lat"), loc.get("lng")))
     return jsonify(reply=result["reply"], place_id=result["place_id"], error=result["error"])
 
 
