@@ -101,6 +101,7 @@
       sells: raw.sells || [],
       note: raw.recommendation || raw.summary || "",
       source: raw.source || (CFG.demo ? "sample" : ""),
+      byHour: Array.isArray(raw.by_hour) && raw.by_hour.length === 24 ? raw.by_hour.map(function (n) { return num(n); }) : null,
       lat: raw.lat, lng: raw.lng,
       x: raw.map_x != null ? raw.map_x : 50, y: raw.map_y != null ? raw.map_y : 30
     };
@@ -257,6 +258,32 @@
   }
   function itemLabel() { return S.item || "what you're after"; }
 
+  /* "Best time to go": bars for 07:00 to 20:00 from by_hour (past averages). */
+  function hourLabel(h) { return (h < 10 ? "0" : "") + h + ":00"; }
+  function chartHTML(p) {
+    if (!p.byHour) return "";
+    var FIRST = 7, LAST = 20, now = new Date().getHours(), vals = [], h;
+    for (h = FIRST; h <= LAST; h++) vals.push(p.byHour[h]);
+    var max = Math.max.apply(null, vals) || 1;
+    var best = FIRST, worst = FIRST;
+    for (h = FIRST; h <= LAST; h++) {
+      if (p.byHour[h] < p.byHour[best]) best = h;
+      if (p.byHour[h] > p.byHour[worst]) worst = h;
+    }
+    var bars = "";
+    for (h = FIRST; h <= LAST; h++) {
+      var pct = Math.max(8, Math.round(p.byHour[h] / max * 100));
+      bars += '<div class="hr' + (h === now ? " now" : "") + (h === best ? " quiet" : "") + '"><i style="height:' + pct + '%"></i>' +
+        "<span>" + (h % 2 === 1 || h === now ? h : "") + "</span></div>";
+    }
+    var inTen = Math.max(0, p.wait + (p.trend === "rising" ? 2 : p.trend === "dropping" ? -2 : 0));
+    var summary = "Quietest around " + hourLabel(best) + ", about " + p.byHour[best] + " min. Busiest around " + hourLabel(worst) + ", about " + p.byHour[worst] + " min.";
+    return '<div class="best-time"><h3>Best time to go' + demoTag() + '</h3>' +
+      '<div class="hours" role="img" aria-label="' + esc(summary) + '">' + bars + "</div>" +
+      '<p class="meta">' + esc(summary) + (h === now ? "" : "") + "</p>" +
+      '<p class="meta">In 10 minutes: about <b>' + inTen + " min</b> and " + (p.trend === "rising" ? "getting longer" : p.trend === "dropping" ? "getting shorter" : "staying about the same") + ". Bars show past averages; the outlined bar is this hour.</p></div>";
+  }
+
   var VIEWS = {
     home: function () {
       var n = S.places.filter(function (p) { return !S.item || hasItem(p, S.item); }).length;
@@ -275,7 +302,7 @@
         '<button class="small-btn" data-act="back" aria-label="Close">✕</button></div>' +
         '<div class="tiles"><div class="tile"><small>Queue now</small><b>' + plural(p.queueNow, "person", "people") + "</b>" + lvlHTML(p.queueNow) + "</div>" +
         '<div class="tile"><small>When you arrive</small><b>~' + p.wait + " min</b>" + lvlHTML(p.queueArrive, trendWord) + "</div></div>" +
-        '<div class="note"><em>Prediction · ' + p.low + " to " + p.high + " min" + demoTag() + "</em>Verdict: <b>" + esc(v.title) + "</b> " + esc(v.text) + "</div>" +
+        '<div class="note"><em>Prediction · ' + p.low + " to " + p.high + " min" + demoTag() + "</em>Verdict: <b>" + esc(v.title) + "</b> " + esc(v.text) + "</div>" + chartHTML(p) +
         '<div class="btn-row">' +
         (good
           ? '<button class="btn btn-primary" data-act="go" data-id="' + esc(p.id) + '">Take me there</button><button class="btn btn-outline" data-act="alts">Find other places</button>'
