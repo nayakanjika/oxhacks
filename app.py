@@ -14,12 +14,14 @@ from flask import Flask, redirect, render_template, request, session, url_for
 import auth
 
 from api import api  # the /api routes (places, chat, report): see api.py
+from voice import voice  # ElevenLabs voice routes: see voice.py
 
 app = Flask(__name__)
 # Signs the login cookie. Put SECRET_KEY=any-long-random-text in .env (on every server).
 app.secret_key = os.environ.get("SECRET_KEY") or "qrious-dev-secret-change-me"
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
 app.register_blueprint(api)
+app.register_blueprint(voice)
 
 
 @app.route("/")

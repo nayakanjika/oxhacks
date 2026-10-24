@@ -198,8 +198,14 @@
   /* ============ 4. Voice: swap these two functions for ElevenLabs later ============
      listen(cb)   -> speaks into the mic, calls cb(text)
      speak(text)  -> reads text aloud
-     They use the browser's built-in voice tools for now (no key needed). */
-  function listen(onText, btn) {
+     ElevenLabs is used when ELEVENLABS_API_KEY is in .env (see voice.py);
+     otherwise, or if it fails, the browser's built-in voice takes over. */
+  var voiceOn = false; // true when ELEVENLABS_API_KEY is in .env on the server
+  fetch("/api/voice-status").then(function (r) { return r.json(); })
+    .then(function (d) { voiceOn = !!d.enabled; }).catch(function () {});
+
+  /* Browser voice (the fallback, no key needed) */
+  function listenBrowser(onText, btn) {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast("Voice input isn't supported in this browser. Try Chrome."); return; }
     var r = new SR();
@@ -211,12 +217,52 @@
     r.onend = done;
     try { r.start(); } catch (e) { done(); }
   }
-  function speak(text) {
+  function speakBrowser(text) {
     if (!("speechSynthesis" in window)) { toast("Reading aloud isn't supported in this browser."); return; }
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     u.lang = "en-GB";
     window.speechSynthesis.speak(u);
+  }
+
+  /* ElevenLabs: record up to 7 seconds (tap the mic again to stop early) */
+  var rec = null;
+  function listen(onText, btn) {
+    if (rec) { rec.stop(); return; }
+    if (!voiceOn || !window.MediaRecorder || !navigator.mediaDevices) { listenBrowser(onText, btn); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      var chunks = [], mr = new MediaRecorder(stream), timer;
+      function done() {
+        clearTimeout(timer); rec = null;
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        if (btn) { btn.classList.remove("listening"); btn.setAttribute("aria-label", "Speak"); }
+      }
+      mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      mr.onstop = function () {
+        done();
+        var blob = new Blob(chunks, { type: mr.mimeType || "audio/webm" });
+        if (!blob.size) { toast("Couldn't hear that. Please try again."); return; }
+        var fd = new FormData(); fd.append("audio", blob, "speech.webm");
+        fetch("/api/transcribe", { method: "POST", body: fd })
+          .then(function (r) { if (!r.ok) throw new Error("bad"); return r.json(); })
+          .then(function (d) { if (d.text) onText(d.text); else toast("Couldn't hear that. Please try again."); })
+          .catch(function () { toast("Voice service is busy. Using your browser's voice instead."); listenBrowser(onText, btn); });
+      };
+      rec = mr; mr.start();
+      timer = setTimeout(function () { if (rec) rec.stop(); }, 7000);
+      if (btn) { btn.classList.add("listening"); btn.setAttribute("aria-label", "Listening… tap to stop"); }
+    }).catch(function () { toast("Please allow the microphone to use voice."); });
+  }
+
+  var player = null;
+  function speak(text) {
+    if (!voiceOn) { speakBrowser(text); return; }
+    if (player) { player.pause(); player = null; }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text }) })
+      .then(function (r) { if (!r.ok) throw new Error("bad"); return r.blob(); })
+      .then(function (b) { player = new Audio(URL.createObjectURL(b)); return player.play(); })
+      .catch(function () { speakBrowser(text); });
   }
 
   /* ============ 5. The map ============ */
