@@ -1,32 +1,76 @@
 {% extends "base.html" %}
 
-{% block title %}Search | Q-rious{% endblock %}
+{% block title %}Q-rious{% endblock %}
+{% block body_class %}app-page{% endblock %}
+
+{% block head %}
+  {# Dyslexia-friendly font, only used when the user switches it on in Settings #}
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}">
+{% endblock %}
 
 {% block content %}
-<header class="top-bar">
-  <a href="{{ url_for('index') }}" class="top-bar-brand" aria-label="Back to the Q-rious home page">
-    <img class="logo-tiny" src="{{ url_for('static', filename='logo-white.svg') }}" alt="">
-    <span>Q-rious</span>
-  </a>
-</header>
+{# ---------------------------------------------------------------------
+   THE APP SCREEN. Everything here is drawn by static/ui.js.
 
-<section class="app-shell">
-  <h1>Search</h1>
-  <p class="muted">This page is a placeholder. The team builds the rest here.</p>
+   #map    -> the map. Right now ui.js draws a placeholder map.
+              TEAMMATE: put the real Google Map in this div (see SETUP.md).
+   #sheet  -> the panel that slides up from the bottom (places, queues, etc.)
+   #chat   -> the Gemini chat panel
+   #settings -> accessibility + alerts
+   --------------------------------------------------------------------- #}
+<div class="app" id="app">
 
-  {# TEAMMATES: build your parts below. Suggested order:
-       1. Search bar plus the "Ask" button (Gemini chatbot)
-       2. Place selection and queue lengths (data from Tiger Data)
-       3. Google Maps and other places that sell the same item
-       4. Filters for how far the user will walk
-     Show queue length as a WORD plus an icon, not just a colour
-     (Short / Medium / Long), so it works for colour blindness. #}
+  <div id="map" class="map" role="region" aria-label="Map of nearby places"></div>
 
-  <div class="placeholder-card">
-    <p>Search bar and Ask button go here.</p>
-  </div>
-  <div class="placeholder-card">
-    <p>Nearby queues go here.</p>
-  </div>
-</section>
+  <form class="search" id="searchForm" role="search" autocomplete="off">
+    <label class="sr-only" for="q">What are you after?</label>
+    <div class="search-box">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Try “coconut milk latte”" enterkeyhint="search">
+      <button type="button" id="micBtn" class="icon-btn" aria-label="Speak your search">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+    </div>
+    <button type="button" id="chatBtn" class="chat-btn" aria-label="Ask Q-rious (chat)">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+    </button>
+  </form>
+
+  <section id="sheet" class="sheet" aria-live="polite"></section>
+
+  <section id="chat" class="panel" hidden aria-label="Chat with Q-rious">
+    <header class="hdr">
+      <button type="button" class="hdr-btn" id="chatClose" aria-label="Close chat">✕</button>
+      <span>Ask Q-rious</span>
+    </header>
+    <div class="chat-log" id="chatLog"></div>
+    <div class="chips chips-wrap" id="chatChips"></div>
+    <form class="chat-input" id="chatForm" autocomplete="off">
+      <label class="sr-only" for="chatText">Your message</label>
+      <input id="chatText" type="text" placeholder="Ask anything…">
+      <button type="button" id="chatMic" class="icon-btn" aria-label="Speak your message">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button type="submit" class="send-btn" aria-label="Send">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 17-3-7z"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <section id="settings" class="panel" hidden aria-label="Settings">
+    <header class="hdr">
+      <button type="button" class="hdr-btn" id="settingsClose" aria-label="Close settings">‹</button>
+      <span>Settings</span>
+    </header>
+    <div class="body" id="settingsBody"></div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='ui-data.js') }}"></script>
+  <script src="{{ url_for('static', filename='ui.js') }}"></script>
 {% endblock %}
