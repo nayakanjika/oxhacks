@@ -5,61 +5,96 @@
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
+    <title>Q-rious | Oxford</title>
 
-    <title>Oxford Food Finder</title>
-
-    <!-- Leaflet Map CSS -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
-
-    <!-- Your CSS -->
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='map.css') }}"
-    >
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='map.css') }}">
 </head>
-
 <body>
 
-    <div class="phone">
+<div class="phone">
 
-        <!-- Phone notch -->
-        <div class="notch"></div>
+    <!-- GOOGLE MAP -->
+    <div id="map"></div>
 
-        <!-- Interactive map -->
-        <div id="map"></div>
+    <!-- SEARCH BAR -->
+    <div class="top-search">
+        <span>🔍</span>
+        <input
+            type="text"
+            id="search"
+            placeholder="Search cafés in Oxford..."
+        >
+    </div>
 
-        <!-- Bottom search panel -->
-        <div class="bottom-panel">
+    <!-- BOTTOM SHEET -->
+    <div id="bottom-sheet" class="bottom-sheet">
 
+        <div id="drag-handle" class="drag-handle">
             <div class="handle"></div>
+        </div>
 
-            <h2>WHAT ARE YOU CRAVING?</h2>
+        <!-- SCREEN 1: NEAR YOU -->
+        <div id="nearby-view">
+            <h2>Near you</h2>
+            <p id="nearby-count">Finding Oxford cafés...</p>
+        </div>
 
-            <div class="search-container">
-                <input
-                    type="text"
-                    id="search"
-                    placeholder="Coffee, pizza, brunch..."
-                    autocomplete="off"
-                >
-                <span class="search-icon">⌕</span>
+        <!-- SCREEN 2: SELECTED PLACE -->
+        <div id="place-view" class="hidden">
+
+            <h2 id="place-name">Café name</h2>
+            <p id="place-description">Café · Oxford</p>
+
+            <div class="queue-grid">
+
+                <div class="queue-box">
+                    <small>Queue now</small>
+                    <strong id="queue-now">14 people</strong>
+                    <span id="queue-status">▮▮▮ Long</span>
+                </div>
+
+                <div class="queue-box">
+                    <small>When you arrive</small>
+                    <strong id="queue-later">~16 min</strong>
+                    <span>▮▮ Still long</span>
+                </div>
+
             </div>
 
-            <!-- Results appear here -->
-            <div id="results"></div>
+            <div class="prediction">
+                <small>PREDICTION · DEMO DATA</small>
+                <p id="prediction-text">
+                    Queue prediction will appear here.
+                </p>
+            </div>
+
+            <button id="find-another" class="primary-btn">
+                Too long? Find another
+            </button>
+
+            <button id="directions" class="secondary-btn">
+                Take me here anyway
+            </button>
 
         </div>
 
     </div>
 
-    <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</div>
 
-    <!-- Your JavaScript -->
-    <script src="{{ url_for('static', filename='map.js') }}"></script>
+<script src="{{ url_for('static', filename='map.js') }}"></script>
+
+{% if api_key %}
+<script async
+    src="https://maps.googleapis.com/maps/api/js?key={{ api_key | urlencode }}&loading=async&callback=initMap&v=weekly">
+</script>
+{% else %}
+<script>
+    document.getElementById("nearby-count").textContent =
+        "Missing Google Maps API key.";
+</script>
+{% endif %}
 
 </body>
 </html>
