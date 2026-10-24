@@ -290,7 +290,7 @@
   var VIEWS = {
     home: function () {
       var n = S.places.filter(function (p) { return !S.item || hasItem(p, S.item); }).length;
-      return '<div class="grab"></div><div class="sheet-top"><div><h2 tabindex="-1">Near you</h2>' +
+      return '<div class="grab"></div><div class="sheet-top"><div>' + (S.user ? '<p class="meta" style="margin:0 0 .15rem"><b>Hi ' + esc(S.user.name.split(" ")[0]) + ' \ud83d\udc4b</b></p>' : "") + '<h2 tabindex="-1">Near you</h2>' +
         '<p class="meta">' + (S.item ? plural(n, "place sells", "places sell") + " " + esc(S.item) : plural(n, "place", "places") + " nearby") + " · tap a pin" + demoTag() + "</p></div>" +
         '<button class="small-btn" data-act="settings" aria-label="Settings">' + ICON.gear + "</button></div>" +
         '<p class="saved-line">Time saved this session: <b>' + S.saved + " min</b></p>";
@@ -463,12 +463,21 @@
     });
   }
 
+  function loadMe() {
+    fetch("/api/me").then(function (r) { return r.json(); }).then(function (d) { S.user = d.user || null; if (S.user && S.view === "home" && typeof render === "function") { render(false); } }).catch(function () {});
+  }
+  loadMe();
+
   function settingsRows() {
     function row(key, title, desc) {
       var on = S.a11y[key];
       return '<div class="setting"><div><h3>' + title + "</h3><p>" + desc + '</p></div><button class="chip" data-act="toggle" data-key="' + key + '" aria-pressed="' + on + '">' + (on ? "On" : "Off") + "</button></div>";
     }
-    $("#settingsBody").innerHTML = '<h2 style="margin:0 0 .8rem;font-size:1.2rem">Make it easier to read</h2>' +
+    var account = S.user
+      ? '<div class="setting"><div><h3>Signed in as ' + esc(S.user.name) + '</h3><p>' + esc(S.user.email) + '</p></div><a class="chip" href="/logout" style="text-decoration:none;display:inline-flex;align-items:center">Sign out</a></div>'
+      : '<div class="setting"><div><h3>Sign in</h3><p>Save your details and alerts</p></div><a class="chip" href="/login" style="text-decoration:none;display:inline-flex;align-items:center">Sign in</a></div>';
+    $("#settingsBody").innerHTML = '<h2 style="margin:0 0 .8rem;font-size:1.2rem">Your account</h2>' + account +
+      '<h2 style="margin:1.2rem 0 .8rem;font-size:1.2rem">Make it easier to read</h2>' +
       row("large", "Larger text", "Makes everything bigger") +
       row("dyslexia", "Dyslexia-friendly font", "Uses Atkinson Hyperlegible") +
       row("contrast", "High contrast", "Stronger borders and text") +
