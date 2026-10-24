@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Q-rious{% endblock %}
+{% block body_class %}landing{% endblock %}
+
+{% block content %}
+<section class="landing-content">
+  <img class="logo" src="{{ url_for('static', filename='logo-white.svg') }}" alt="Q-rious logo">
+  <h1>Q-rious</h1>
+  <p class="tagline">Satisfy your Q-riosity</p>
+
+  <div class="buttons">
+    <a class="btn btn-primary" href="{{ url_for('search') }}">Continue as guest</a>
+    <a class="btn btn-outline" href="{{ url_for('login') }}">Log in</a>
+  </div>
+</section>
+{% endblock %}

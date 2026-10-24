@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Log in | Q-rious{% endblock %}
+{% block body_class %}landing{% endblock %}
+
+{% block content %}
+<section class="landing-content">
+  <a href="{{ url_for('index') }}" aria-label="Back to the Q-rious home page">
+    <img class="logo logo-small" src="{{ url_for('static', filename='logo-white.svg') }}" alt="Q-rious logo">
+  </a>
+  <h1>Log in</h1>
+  <p class="tagline">Log in is coming soon. For now, you can carry on as a guest.</p>
+
+  {# LATER: replace this placeholder with the real login form.
+     Users will be stored in a Tiger Data table, with hashed passwords
+     (never plain text). #}
+
+  <div class="buttons">
+    <a class="btn btn-primary" href="{{ url_for('search') }}">Continue as guest</a>
+    <a class="btn btn-outline" href="{{ url_for('index') }}">Back</a>
+  </div>
+</section>
+{% endblock %}
