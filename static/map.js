@@ -1,218 +1,260 @@
 
-/* =====================================
-   1. CREATE OXFORD MAP
-===================================== */
+const OXFORD = { lat: 51.7520, lng: -1.2577 };
 
-const map = L.map("map", {
-    zoomControl: false
-}).setView(
-    [51.7520, -1.2577],
-    15
-);
+let map;
+let selectedPlace = null;
+let markers = [];
+let Place;
+let AdvancedMarkerElement;
 
-/* =====================================
-   2. ADD MAP TILES
-===================================== */
-
-L.tileLayer(
-    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap contributors"
-    }
-).addTo(map);
-
-map.attributionControl.setPosition("topright");
-
-/* =====================================
-   3. CREATE MARKER LAYER
-===================================== */
-
-const markers = L.layerGroup().addTo(map);
-
+const sheet = document.getElementById("bottom-sheet");
+const handle = document.getElementById("drag-handle");
 const searchInput = document.getElementById("search");
-const results = document.getElementById("results");
 
-let places = [];
+let sheetOffset = 340;
+let startY = 0;
+let startOffset = 340;
+let dragging = false;
 
-/* =====================================
-   4. CUSTOM MARKER DESIGN
-===================================== */
-
-const cafeIcon = L.divIcon({
-    className: "",
-    html: '<div class="custom-marker"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
-});
-
-/* =====================================
-   5. LOAD REAL OXFORD LOCATIONS
-===================================== */
-
-async function loadPlaces() {
-
-    results.textContent = "Loading Oxford cafés...";
-
-    // Oxford city centre bounding box
-    const query = `
-        [out:json][timeout:25];
-        (
-            nwr["amenity"="cafe"]
-                (51.735,-1.280,51.770,-1.235);
-
-            nwr["amenity"="restaurant"]
-                (51.735,-1.280,51.770,-1.235);
-
-            nwr["amenity"="fast_food"]
-                (51.735,-1.280,51.770,-1.235);
-        );
-        out center;
-    `;
-
+// INITIALISE GOOGLE MAPS
+window.initMap = async function () {
     try {
+        const mapsLib = await google.maps.importLibrary("maps");
+        const placesLib = await google.maps.importLibrary("places");
+        const markerLib = await google.maps.importLibrary("marker");
 
-        const response = await fetch(
-            "https://overpass.kumi.systems/api/interpreter",
-            {
-                method: "POST",
-                body: new URLSearchParams({
-                    data: query
-                })
-            }
-        );
+        Place = placesLib.Place;
+        AdvancedMarkerElement = markerLib.AdvancedMarkerElement;
 
-        if (!response.ok) {
-            throw new Error("Could not fetch places");
-        }
-
-        const data = await response.json();
-
-        places = data.elements
-            .map(item => ({
-                name: item.tags?.name,
-                type: item.tags?.amenity,
-                cuisine: item.tags?.cuisine || "",
-                lat: item.lat ?? item.center?.lat,
-                lon: item.lon ?? item.center?.lon
-            }))
-            .filter(place =>
-                place.name &&
-                place.lat != null &&
-                place.lon != null
-            );
-
-        displayPlaces(places);
-
-    } catch (error) {
-
-        console.error(error);
-
-        results.textContent =
-            "Unable to load locations. Please try again.";
-    }
-}
-
-/* =====================================
-   6. DISPLAY PLACES ON MAP
-===================================== */
-
-function displayPlaces(filteredPlaces) {
-
-    // Remove previous markers
-    markers.clearLayers();
-
-    // Clear previous search results
-    results.replaceChildren();
-
-    filteredPlaces.slice(0, 100).forEach(place => {
-
-        // Add marker
-        const marker = L.marker(
-            [place.lat, place.lon],
-            {
-                icon: cafeIcon
-            }
-        ).addTo(markers);
-
-        // Safe popup content
-        const popup = document.createElement("div");
-
-        const popupTitle = document.createElement("strong");
-        popupTitle.textContent = place.name;
-
-        const popupType = document.createElement("p");
-        popupType.textContent = place.cuisine || place.type;
-
-        popup.append(popupTitle, popupType);
-
-        marker.bindPopup(popup);
-
-        // Create result card
-        const item = document.createElement("div");
-
-        item.className = "result";
-
-        const name = document.createElement("strong");
-        name.textContent = place.name;
-
-        const description = document.createElement("small");
-
-        description.textContent =
-            place.type +
-            (place.cuisine ? " · " + place.cuisine : "");
-
-        item.append(name, description);
-
-        // Clicking a result zooms to location
-        item.addEventListener("click", () => {
-
-            map.flyTo(
-                [place.lat, place.lon],
-                17,
-                {
-                    duration: 1.2
-                }
-            );
-
-            marker.openPopup();
+        map = new mapsLib.Map(document.getElementById("map"), {
+            center: OXFORD,
+            zoom: 15,
+            mapId: "DEMO_MAP_ID",
+            disableDefaultUI: true,
+            gestureHandling: "greedy",
+            clickableIcons: false
         });
 
-        results.appendChild(item);
-    });
+        await loadCafes();
 
-    if (filteredPlaces.length === 0) {
+    } catch (error) {
+        console.error(error);
+        document.getElementById("nearby-count").textContent =
+            "Could not load Google Maps. Check API settings.";
+    }
+};
 
-        results.textContent =
-            "No matching places found.";
+// LOAD REAL CAFES
+async function loadCafes(query = "") {
+    try {
+        let response;
+
+        if (query.trim()) {
+            response = await Place.searchByText({
+                textQuery: query + " in Oxford UK",
+                fields: [
+                    "id",
+                    "displayName",
+                    "location",
+                    "formattedAddress"
+                ],
+                locationBias: {
+                    center: OXFORD,
+                    radius: 3000
+                },
+                maxResultCount: 20
+            });
+        } else {
+            response = await Place.searchNearby({
+                fields: [
+                    "id",
+                    "displayName",
+                    "location",
+                    "formattedAddress"
+                ],
+                locationRestriction: {
+                    center: OXFORD,
+                    radius: 2500
+                },
+                includedPrimaryTypes: ["cafe"],
+                maxResultCount: 20
+            });
+        }
+
+        clearMarkers();
+
+        const places = response.places || [];
+
+        document.getElementById("nearby-count").textContent =
+            places.length + " places · Tap a pin";
+
+        places.forEach((place, index) => {
+            if (!place.location) return;
+
+            const pin = document.createElement("div");
+            pin.className = "cafe-pin";
+            pin.style.cssText = `
+                width: 25px;
+                height: 25px;
+                border-radius: 50% 50% 50% 0;
+                background: #002147;
+                border: 3px solid white;
+                transform: rotate(-45deg);
+                box-shadow: 0 3px 8px #0004;
+                cursor: pointer;
+            `;
+
+            const marker = new AdvancedMarkerElement({
+                map: map,
+                position: place.location,
+                title: place.displayName,
+                content: pin
+            });
+
+            marker.addListener("click", () => {
+                showPlace(place, index);
+            });
+
+            markers.push(marker);
+        });
+
+    } catch (error) {
+        console.error("Places error:", error);
+        document.getElementById("nearby-count").textContent =
+            "Unable to load cafés. Check Places API access.";
     }
 }
 
-/* =====================================
-   7. SEARCH FUNCTION
-===================================== */
+function clearMarkers() {
+    markers.forEach(marker => marker.map = null);
+    markers = [];
+}
 
-searchInput.addEventListener("input", () => {
+// SCREEN 2: SELECTED PLACE
+function showPlace(place, index) {
+    selectedPlace = place;
 
-    const searchTerm =
-        searchInput.value.toLowerCase().trim();
+    document.getElementById("nearby-view")
+        .classList.add("hidden");
 
-    const filtered = places.filter(place => {
+    document.getElementById("place-view")
+        .classList.remove("hidden");
 
-        const searchableText = `
-            ${place.name}
-            ${place.type}
-            ${place.cuisine}
-        `.toLowerCase();
+    document.getElementById("place-name").textContent =
+        place.displayName || "Oxford Café";
 
-        return searchableText.includes(searchTerm);
-    });
+    document.getElementById("place-description").textContent =
+        "Café · " + (place.formattedAddress || "Oxford");
 
-    displayPlaces(filtered);
+    // SAMPLE QUEUE DATA - REPLACE WITH BACKEND LATER
+    const queue = 5 + (index * 3) % 15;
+    const wait = Math.round(queue * 1.15);
+
+    document.getElementById("queue-now").textContent =
+        queue + " people";
+
+    document.getElementById("queue-later").textContent =
+        "~" + wait + " min";
+
+    document.getElementById("queue-status").textContent =
+        queue > 10 ? "▮▮▮ Long" : "▮▮ Short";
+
+    document.getElementById("prediction-text").textContent =
+        queue > 10
+            ? "Verdict: Skip it. The queue is currently long."
+            : "Verdict: Good option. The queue is relatively short.";
+
+    map.panTo(place.location);
+    expandSheet();
+}
+
+// SHEET ANIMATIONS
+function expandSheet() {
+    sheetOffset = 0;
+    sheet.style.transform = "translateY(0px)";
+}
+
+function collapseSheet() {
+    sheetOffset = 340;
+    sheet.style.transform = "translateY(340px)";
+}
+
+handle.addEventListener("pointerdown", event => {
+    dragging = true;
+    startY = event.clientY;
+    startOffset = sheetOffset;
+
+    sheet.style.transition = "none";
+    handle.setPointerCapture(event.pointerId);
 });
 
-/* =====================================
-   8. INITIALISE
-===================================== */
+handle.addEventListener("pointermove", event => {
+    if (!dragging) return;
 
-loadPlaces();
+    const delta = event.clientY - startY;
+    sheetOffset = Math.max(0, Math.min(340, startOffset + delta));
+
+    sheet.style.transform =
+        `translateY(${sheetOffset}px)`;
+});
+
+handle.addEventListener("pointerup", () => {
+    if (!dragging) return;
+
+    dragging = false;
+    sheet.style.transition =
+        "transform .45s cubic-bezier(.22,1,.36,1)";
+
+    if (sheetOffset < 170) {
+        expandSheet();
+    } else {
+        collapseSheet();
+    }
+});
+
+handle.addEventListener("pointercancel", () => {
+    dragging = false;
+    sheet.style.transition =
+        "transform .45s cubic-bezier(.22,1,.36,1)";
+    if (sheetOffset < 170) expandSheet();
+    else collapseSheet();
+});
+
+// SEARCH
+let searchTimer;
+
+searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+
+    searchTimer = setTimeout(() => {
+        loadCafes(searchInput.value);
+    }, 650);
+});
+
+// BUTTONS
+document.getElementById("find-another")
+    .addEventListener("click", () => {
+        document.getElementById("place-view")
+            .classList.add("hidden");
+
+        document.getElementById("nearby-view")
+            .classList.remove("hidden");
+
+        selectedPlace = null;
+        collapseSheet();
+    });
+
+document.getElementById("directions")
+    .addEventListener("click", () => {
+        if (!selectedPlace) return;
+
+        const loc = selectedPlace.location;
+
+        const url =
+            "https://www.google.com/maps/dir/?api=1" +
+            "&destination=" +
+            encodeURIComponent(loc.lat() + "," + loc.lng()) +
+            "&travelmode=walking";
+
+        window.open(url, "_blank", "noopener,noreferrer");
+    });
