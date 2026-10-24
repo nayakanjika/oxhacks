@@ -20,8 +20,12 @@ api = Blueprint("api", __name__, url_prefix="/api")
 @api.get("/health")
 def health():
     # Never returns the key itself, only whether it was found.
+    found = places_data.get_places()
     return jsonify(ok=True, gemini_key_loaded=chat.has_key(),
-                   places=len(places_data.get_places()))
+                   places=len(found),
+                   tiger_data_configured=places_data.db_configured(),
+                   data_source=(found[0].get("source") if found else None),
+                   tiger_data_error=places_data.LAST_ERROR["message"])
 
 
 @api.get("/places")
