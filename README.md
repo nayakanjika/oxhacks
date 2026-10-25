@@ -204,3 +204,4 @@ Q-rious helps people make more informed decisions about how they spend theirs.
 
 ---
 
+Aditya Anand | Anjika Nayak | Freya Cook | Muhammed Topiwala 
