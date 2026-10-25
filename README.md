@@ -184,8 +184,7 @@ Integrating Google Maps, Google Gemini, ElevenLabs and Tiger Data required coord
 - Expand coverage beyond Oxford.
 - Introduce additional venue categories and event-specific recommendations.
 
-<br> <br> <hr> <hr>
-<br> <br>
+<br> <hr> <br>
 ## Built at OxHack 2026
 
 Q-rious was developed by a team of four at OxHack 2026, responding to the theme **Time**.
@@ -193,14 +192,6 @@ Q-rious was developed by a team of four at OxHack 2026, responding to the theme 
 Our aim was to tackle a familiar but often overlooked problem: the time lost to queues, uncertainty and inefficient decisions.
 
 By combining geospatial technology, time-dependent data, conversational AI and voice interaction, we created a working prototype that demonstrates a more time-conscious way to explore a city.
-
-<hr>
-
-## Our Vision
-
-**Time is valuable. Finding somewhere to go shouldn't waste it.**
-
-Q-rious helps people make more informed decisions about how they spend theirs.
 
 ---
 
